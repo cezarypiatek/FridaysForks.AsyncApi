@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@2.5.0/styles/default.min.css">
+    <script src="https://unpkg.com/@asyncapi/react-component@latest/browser/standalone/index.js"></script>
+    <style>
+        #DocumentSelectorBox{
+            padding: 0 5px 10px 5px;
+            display: flex;
+            align-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+<div id="DocumentSelectorBox">
+    <label for="documentSelector" style="font-weight: bold; margin-right: 10px;">Document:</label><select id="documentSelector" style="padding: 5px; border-radius: 5px; border: 1px solid #ccc;"></select>
+</div>
+<div id="asyncapi"></div>
+<script></script>
+<script>
+
+    (function (documents){
+        document.addEventListener('DOMContentLoaded', function () {
+            const selector = document.getElementById('documentSelector');
+            documents.forEach(doc => {
+                const option = document.createElement('option');
+                option.value = doc.url;
+                option.textContent = doc.name;
+                selector.appendChild(option);
+            });
+
+            selector.addEventListener('change', function () {
+                renderAsyncApi(selector.value);
+            });
+
+            // Initial render
+            renderAsyncApi(selector.value);
+        });
+   })(DOCUMENT_LIST_SERIALIZED);
+
+    function renderAsyncApi(url) {
+        AsyncApiStandalone.render({
+            schema: {
+                url: url,
+                options: {method: "GET", mode: "cors"},
+            },
+            config: {
+                show: {
+                    sidebar: true,
+                }
+            },
+        }, document.getElementById('asyncapi'));
+    }
+</script>
+
+</body>
+</html>
+
+
