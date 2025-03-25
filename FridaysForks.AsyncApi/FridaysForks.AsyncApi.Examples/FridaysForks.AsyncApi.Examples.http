@@ -1,0 +1,6 @@
+@FridaysForks.AsyncApi.Examples_HostAddress = http://localhost:5198
+
+GET {{FridaysForks.AsyncApi.Examples_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

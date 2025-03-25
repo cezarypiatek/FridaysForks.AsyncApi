@@ -1,0 +1,30 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@2.5.0/styles/default.min.css">
+    <script src="https://unpkg.com/@asyncapi/react-component@latest/browser/standalone/index.js"></script>
+</head>
+<body>
+
+<div id="asyncapi"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AsyncApiStandalone.render({
+            schema: {
+                url: '{{ASYNCAPI_SPEC_URL}}',
+                options: { method: "GET", mode: "cors" },
+            },
+            config: {
+                show: {
+                    sidebar: true,
+                }
+            },
+        }, document.getElementById('asyncapi'));
+    });
+</script>
+
+</body>
+</html>
+
+
