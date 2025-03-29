@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 
@@ -18,7 +19,7 @@ public class AsyncApiDocumentMiddleware
         if (match.Success)
         {
             var name = match.Groups["name"].Value;
-            var doc = registry.Get(name);
+            var doc = await registry.Get(name);
             if (doc == null)
             {
                 context.Response.StatusCode = 404;
@@ -39,7 +40,13 @@ public class AsyncApiDocumentMiddleware
                 await context.Response.WriteAsync(JsonSerializer.Serialize(doc, new JsonSerializerOptions
                 {
                     WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    Converters =
+                    {
+                        new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+                    }
+                    
                 }));
             }
             return;

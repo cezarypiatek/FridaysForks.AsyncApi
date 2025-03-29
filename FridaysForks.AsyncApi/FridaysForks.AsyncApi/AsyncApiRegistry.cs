@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using FridaysForks.AsyncApi.Models;
+using FridaysForks.AsyncApi.Models.V3;
 
 namespace FridaysForks.AsyncApi;
 
@@ -18,7 +19,7 @@ public class AsyncApiRegistry : IAsyncApiRegistry
         _docs[name] = doc;
     }
 
-    public AsyncApiDocument Get(string name)
+    public async ValueTask<AsyncApiDocument> Get(string name)
     {
         if (_docs.TryGetValue(name, out var existingDoc))
         {
@@ -27,7 +28,7 @@ public class AsyncApiRegistry : IAsyncApiRegistry
 
         if (_providerMap.TryGetValue(name, out var provider))
         {
-            var newDoc = provider.GenerateDocument();
+            var newDoc = await provider.GenerateDocument();
             _docs[name] = newDoc;
             return newDoc;
         }
