@@ -35,4 +35,12 @@ public class AsyncApiRegistry : IAsyncApiRegistry
 
         throw new InvalidOperationException($"ASYNC API Document '{name}' not found.");
     }
+
+    public ValueTask<string[]> GetAvailableNames()
+    {
+        var v1 = _providerMap.Keys.ToArray();
+        var v2 = _docs.Keys.ToArray();
+        var sum = new HashSet<string>(v1.Concat(v2));
+        return new ValueTask<string[]>(sum.ToArray());
+    }
 }

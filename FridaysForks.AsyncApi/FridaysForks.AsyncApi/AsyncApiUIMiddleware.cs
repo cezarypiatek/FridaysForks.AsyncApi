@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 
 namespace FridaysForks.AsyncApi;
@@ -23,14 +24,20 @@ public class AsyncApiUIMiddleware
     public async Task InvokeAsync(HttpContext context, IAsyncApiRegistry registry)
     {
         var path = context.Request.Path.Value;
-        var match = Regex.Match(path, @"^/asyncapi/(?<name>[^/]+)$");
+        var match = Regex.Match(path, @"^/asyncapi/?$");
 
         if (match.Success)
         {
-            var name = match.Groups["name"].Value;
-            var url = $"/asyncapi/{name}.json";
+            var allNames = await registry.GetAvailableNames();
+            var allDocs = allNames.Select(x => new
+            {
+                name = x,
+                url = $"/asyncapi/{x}.json"
+            }).ToArray();
+            
+            
 
-            var html = _htmlTemplate.Replace("{{ASYNCAPI_SPEC_URL}}", url);
+            var html = _htmlTemplate.Replace("DOCUMENT_LIST_SERIALIZED", JsonSerializer.Serialize(allDocs));
             context.Response.ContentType = "text/html";
             await context.Response.WriteAsync(html);
             return;

@@ -7,4 +7,5 @@ public interface IAsyncApiRegistry
 {
     void AddDocument(string name, AsyncApiDocument doc);
     ValueTask<AsyncApiDocument> Get(string name);
+    ValueTask<string[]> GetAvailableNames();
 }
