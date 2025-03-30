@@ -56,11 +56,11 @@ public class License
 
 public class ReferenceOrValue<T> where T:class
 {
-    public ReferenceOrValue(string name, bool fromComponents = false)
+    public Reference<T>? Reference { get; }
+
+    public ReferenceOrValue(Reference<T> reference)
     {
-        Ref = fromComponents ? 
-            $"#/components/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}" 
-            : $"#/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}";
+        Reference = reference;
     }
 
     public ReferenceOrValue(T value)
@@ -68,12 +68,10 @@ public class ReferenceOrValue<T> where T:class
         Value = value;
     }
 
-    [JsonPropertyName("$ref")]
-    public string? Ref { get;  }
-
     public T? Value { get; }
     
     public static implicit operator ReferenceOrValue<T>(T value) => new ReferenceOrValue<T>(value);
+    public static implicit operator ReferenceOrValue<T>(Reference<T> value) => new ReferenceOrValue<T>(value);
 }
 
 public class Reference<T>(string name, bool fromComponents = false)

@@ -14,11 +14,9 @@ public class ReferenceOrValueConverter<T> : JsonConverter<ReferenceOrValue<T>> w
 
     public override void Write(Utf8JsonWriter writer, ReferenceOrValue<T> value, JsonSerializerOptions options)
     {
-        if (!string.IsNullOrEmpty(value.Ref))
+        if (value.Reference is not null)
         {
-            writer.WriteStartObject();
-            writer.WriteString("$ref", value.Ref);
-            writer.WriteEndObject();
+            JsonSerializer.Serialize(writer, value.Reference, options);
         }
         else
         {

@@ -154,7 +154,7 @@ class StreetlightsKafkaApiDocProvider : IAsyncApiDocumentProvider
                               Inform about environmental lighting conditions of a particular
                               streetlight.
                               """,
-                    Traits = [new ReferenceOrValue<OperationTrait>("kafka", fromComponents:true)]
+                    Traits = [new Reference<OperationTrait>("kafka", fromComponents:true)]
                 }
             }
         });
