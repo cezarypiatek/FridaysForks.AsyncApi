@@ -1,4 +1,5 @@
-﻿using FridaysForks.AsyncApi;
+﻿using System.Security.Cryptography.Xml;
+using FridaysForks.AsyncApi;
 using FridaysForks.AsyncApi.Models.V3;
 
 class StreetlightsKafkaApiDocProvider : IAsyncApiDocumentProvider
@@ -60,6 +61,54 @@ class StreetlightsKafkaApiDocProvider : IAsyncApiDocumentProvider
                             }
                         }
                     }
+                },
+                MessageTraits = new()
+                {
+                  ["commonHeaders"] = new MessageTrait()
+                  {
+                      Headers = new Schema()
+                      {
+                          Type = "object",
+                          Properties = new ()
+                          {
+                              ["my-app-header"] = new Schema()
+                              {
+                                  Type = "integer",
+                                  Minimum = 0,
+                                  Maximum = 100
+                              }
+                          }
+                      }
+                  }  
+                },
+                Messages = new ()
+                {
+                    ["lightMeasured"] = new Message()
+                    {
+                        Summary = "Inform about environmental lighting conditions of a particular streetlight.",
+                        ContentType = "application/json",
+                        Payload = new Schema()
+                        {
+                            Type = "object",
+                            Properties = new()
+                            {
+                                ["lumens"] = new Schema()
+                                {
+                                    Type = "integer",
+                                    Format = "int32",
+                                    Minimum = 0,
+                                    Description = "Light intensity measured in lumens."
+                                },
+                                ["sentAt"] = new Schema()
+                                {
+                                    Type = "string",
+                                    Format = "date-time",
+                                    Description = "Date and time when the message was sent."
+                                }
+                            }
+                        },
+                        Traits = [Reference<MessageTrait>.FromComponents("commonHeaders")]
+                    }
                 }
             },
             Servers = new()
@@ -68,7 +117,7 @@ class StreetlightsKafkaApiDocProvider : IAsyncApiDocumentProvider
                 {
                     Host = "test.mykafkacluster.org:18092",
                     Protocol = "kafka-secure",
-                    Security = [new("saslScram", fromComponents: true)],
+                    Security = [Reference<SecurityScheme>.FromComponents("saslScram")],
                     Tags = new()
                     {
                         new()
@@ -95,7 +144,7 @@ class StreetlightsKafkaApiDocProvider : IAsyncApiDocumentProvider
                 {
                     Host = "test.mykafkacluster.org:28093",
                     Protocol = "kafka-secure",
-                    Security = [new("certs", fromComponents: true)],
+                    Security = [Reference<SecurityScheme>.FromComponents("certs")],
                     Tags = new()
                     {
                         new()
@@ -121,7 +170,7 @@ class StreetlightsKafkaApiDocProvider : IAsyncApiDocumentProvider
             },
             Channels = new()
             {
-                ["lightingMeasured"] = new()
+                ["lightingMeasured"] = new Channel()
                 {
                     Address = "smartylighting.streetlights.1.0.event.{streetlightId}.lighting.measured",
                     Description = "The topic on which measured values may be produced and consumed.",
@@ -134,13 +183,7 @@ class StreetlightsKafkaApiDocProvider : IAsyncApiDocumentProvider
                     },
                     Messages = new()
                     {
-                        ["lightMeasured"] = new Message()
-                        {
-                            Name = "lightMeasured",
-                            Title = "Light measured",
-                            Summary = "Inform about environmental lighting conditions for a particular streetlight.",
-                            ContentType = "application/json",
-                        }
+                        ["lightMeasured"] = Reference<Message>.FromComponents("lightMeasured")
                     }
                 }
             },
@@ -149,12 +192,15 @@ class StreetlightsKafkaApiDocProvider : IAsyncApiDocumentProvider
                 ["receiveLightMeasurement"] = new Operation()
                 {
                     Action = OperationAction.Receive,
-                    Channel = new("lightingMeasured"),
+                    Channel = Reference<Channel>.FromGlobals("lightingMeasured"),
                     Summary = """
                               Inform about environmental lighting conditions of a particular
                               streetlight.
                               """,
-                    Traits = [new Reference<OperationTrait>("kafka", fromComponents:true)]
+                    Traits = [Reference<OperationTrait>.FromComponents("kafka")],
+                    Messages = [
+                        Reference<Message>.FromPath("channels/lightingMeasured/messages/lightMeasured")
+                    ]
                 }
             }
         });

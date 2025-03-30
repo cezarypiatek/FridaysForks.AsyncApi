@@ -2,7 +2,6 @@
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using FridaysForks.AsyncApi.Converters;
-using FridaysForks.AsyncApi.Models.V3;
 using Microsoft.AspNetCore.Http;
 
 namespace FridaysForks.AsyncApi;
@@ -48,6 +47,7 @@ public class AsyncApiDocumentMiddleware
                     {
                         new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
                         new ReferenceOrValueConverterFactory(),
+                        new SchemaReferenceConverter()
                     }
                 }));
             }

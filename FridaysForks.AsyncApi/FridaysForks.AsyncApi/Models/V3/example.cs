@@ -1,4 +1,5 @@
-﻿using System.Security.Authentication.ExtendedProtection;
+﻿using System.Linq.Expressions;
+using System.Security.Authentication.ExtendedProtection;
 using System.Text.Json.Serialization;
 
 namespace FridaysForks.AsyncApi.Models.V3;
@@ -10,7 +11,7 @@ public class AsyncApiDocument
     public Info Info { get; set; }
     public Dictionary<string, Server> Servers { get; set; } 
     public string DefaultContentType { get; set; }
-    public Dictionary<string, Channel> Channels { get; set; } 
+    public Dictionary<string, ReferenceOrValue<Channel>> Channels { get; set; } 
     public Dictionary<string, ReferenceOrValue<Operation>> Operations { get; set; } 
     public Components Components { get; set; } 
     
@@ -74,12 +75,47 @@ public class ReferenceOrValue<T> where T:class
     public static implicit operator ReferenceOrValue<T>(Reference<T> value) => new ReferenceOrValue<T>(value);
 }
 
-public class Reference<T>(string name, bool fromComponents = false)
+public class Reference<T>
 {
+    //public Reference(string name, bool fromComponents = false)
+    // {
+    //     Ref = fromComponents ? 
+    //         $"#/components/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}" 
+    //         : $"#/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}";
+    // }
+
+    public Reference()
+    {
+    }
+
     [JsonPropertyName("$ref")]
-    public string Ref { get;  } = fromComponents ? 
-        $"#/components/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}" 
-        : $"#/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}";
+    public string Ref { get; set; }
+
+
+    public static Reference<T> FromComponents(string name)
+    {
+        var path = $"#/components/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}";
+        return new Reference<T>()
+        {
+            Ref = path
+        };
+    }
+    public static Reference<T> FromGlobals(string name)
+    {
+        var path = $"#/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}";
+        return new Reference<T>()
+        {
+            Ref = path
+        };
+    }
+    
+    public static Reference<T> FromPath(string path)
+    {
+        return new Reference<T>()
+        {
+            Ref = $"#/{path}"
+        };
+    }
 }
 
 public class Server
@@ -152,14 +188,14 @@ public class ServerVariable
 public class Channel
 {
     public string Address { get; set; }
-    public Dictionary<string, Message> Messages { get; set; } 
+    public Dictionary<string, ReferenceOrValue<Message>> Messages { get; set; } 
     public string Title { get; set; }
     public string Summary { get; set; }
     public string Description { get; set; }
     public List<Reference<Server>> Servers { get; set; } 
     public Dictionary<string, Parameter> Parameters { get; set; } 
     public List<Tag> Tags { get; set; } 
-    public List<ExternalDocumentation> ExternalDocs { get; set; } 
+    public ExternalDocumentation ExternalDocs { get; set; } 
     public ChannelBinding Bindings { get; set; } 
 }
 
@@ -251,7 +287,23 @@ public class Operation
     public List<Reference<Message>> Messages { get; set; }
     public OperationReply Reply { get; set; }
     
-    //public static implicit operator ReferenceOrValue<Operation>(Operation value) => new ReferenceOrValue<Operation>(value);
+}
+
+public class SchemaReference
+{
+    public MultiFormatSchema? MultiFormatSchema { get; set; }
+    public Schema? Schema { get; set; }
+    public Reference<Schema>? Reference { get; set; }
+    
+    public static implicit operator SchemaReference(MultiFormatSchema value) => new SchemaReference { MultiFormatSchema = value };
+    public static implicit operator SchemaReference(Schema value) => new SchemaReference { Schema = value };
+    public static implicit operator SchemaReference(Reference<Schema> value) => new SchemaReference { Reference = value };
+}
+
+public class MultiFormatSchema
+{
+    public string SchemaFormat { get; set; }
+    public string Schema { get; set; }
 }
 
 public class Schema
@@ -352,8 +404,8 @@ public enum OperationAction
 
 public class Message
 {
-    public Dictionary<string, object> Headers { get; set; } 
-    public object Payload { get; set; }
+    public Dictionary<string, ReferenceOrValue<Schema>> Headers { get; set; } 
+    public SchemaReference Payload { get; set; }
     public CorelationID CorrelationId { get; set; } 
     public string ContentType { get; set; } 
     public string Name { get; set; } 
@@ -361,11 +413,59 @@ public class Message
     public string Summary { get; set; } 
     public string Description { get; set; } 
     public List<Tag> Tags { get; set; } 
-    public ExternalDocumentation ExternalDocs { get; set; } 
-    public Dictionary<string, object> Bindings { get; set; } 
+    public ReferenceOrValue<ExternalDocumentation> ExternalDocs { get; set; } 
+    public ReferenceOrValue<MessageBinding> Bindings { get; set; } 
     public Dictionary<string, object> Examples { get; set; } 
-    public Dictionary<string, object> Traits { get; set; } 
+    public List<ReferenceOrValue<MessageTrait>> Traits { get; set; } 
 }
+
+public class MessageBinding
+{
+    public object Http { get; set; }
+    public object Ws { get; set; }
+    public KafkaMessageBinding Kafka { get; set; }
+    public object Anypointmq { get; set; }
+    public object Amqp { get; set; }
+    public object Amqp1 { get; set; }
+    public object Mqtt { get; set; }
+    public object Mqtt5 { get; set; }
+    public object Nats { get; set; }
+    public object Jms { get; set; }
+    public object Sns { get; set; }
+    public object Solace { get; set; }
+    public object Sqs { get; set; }
+    public object Stomp { get; set; }
+    public object Redis { get; set; }
+    public object Mercure { get; set; }
+    public object Ibmmq { get; set; }
+    public object Googlepubsub { get; set; }
+    public object Pulsar { get; set; }
+}
+
+public class KafkaMessageBinding
+{
+    public ReferenceOrValue<Schema> Key { get; set; }
+    public string SchemaIdLocation { get; set; }
+    public string SchemaIdPayloadEncoding { get; set; }
+    public string SchemaLookupStrategy { get; set; }
+    public string BindingVersion { get; set; }
+}
+
+public class MessageTrait
+{
+    public ReferenceOrValue<Schema> Headers { get; set; }
+    public ReferenceOrValue<CorelationID> CorrelationId { get; set; }
+    public string ContentType { get; set; }
+    public string Name { get; set; }
+    public string Title { get; set; }
+    public string Summary { get; set; }
+    public string Description { get; set; }
+    public List<Tag> Tags { get; set; }
+    public ReferenceOrValue<ExternalDocumentation> ExternalDocs { get; set; }
+    public ReferenceOrValue<MessageBinding> Bindings { get; set; }
+    public List<object> Examples { get; set; }
+}
+
 
 public class CorelationID
 {
@@ -379,4 +479,8 @@ public class Components
     public Dictionary<string, Channel>? Channels { get; set; }
     public Dictionary<string, SecurityScheme>? SecuritySchemes { get; set; }
     public Dictionary<string, OperationTrait>? OperationTraits { get; set; }
+    public Dictionary<string, Message>? Messages { get; set; }
+    public Dictionary<string, MessageTrait>? MessageTraits { get; set; }
+    
+    public Dictionary<string, Schema>? Schemas { get; set; }
 }

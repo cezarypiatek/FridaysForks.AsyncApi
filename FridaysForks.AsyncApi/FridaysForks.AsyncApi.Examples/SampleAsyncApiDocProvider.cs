@@ -1,4 +1,5 @@
-﻿using FridaysForks.AsyncApi;
+﻿using System.Security.Cryptography.Xml;
+using FridaysForks.AsyncApi;
 using FridaysForks.AsyncApi.Models.V3;
 
 class SampleAsyncApiDocProvider: IAsyncApiDocumentProvider
@@ -14,13 +15,13 @@ class SampleAsyncApiDocProvider: IAsyncApiDocumentProvider
                 Version = "1.0.0"
             },
            
-            Channels = new Dictionary<string, Channel>
+            Channels = new ()
             {
-                ["testChannel"] = new()
+                ["testChannel"] = new Channel()
                 {
                     Address = "proto_Some_Channel_Compacted",
                     Description = "Sample channel",
-                    Servers = [new ("test")], 
+                    Servers = [Reference<Server>.FromGlobals("test")], 
                     Bindings = new ChannelBinding
                     {
                         Kafka = new KafkaChannelBinding
@@ -63,7 +64,7 @@ class SampleAsyncApiDocProvider: IAsyncApiDocumentProvider
                 {
                     Action = OperationAction.Receive,
                     Description = "Persis data in Key-Value store and expose it via REST API",
-                    Channel = new ("testChannel"),
+                    Channel = Reference<Channel>.FromGlobals("testChannel"),
                 }
             }
         });
