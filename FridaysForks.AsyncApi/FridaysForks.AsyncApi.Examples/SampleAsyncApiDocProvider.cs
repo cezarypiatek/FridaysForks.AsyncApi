@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography.Xml;
-using FridaysForks.AsyncApi;
+﻿using FridaysForks.AsyncApi;
 using FridaysForks.AsyncApi.Models.V3;
 
 class SampleAsyncApiDocProvider: IAsyncApiDocumentProvider

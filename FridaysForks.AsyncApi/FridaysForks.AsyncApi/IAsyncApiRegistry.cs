@@ -1,5 +1,4 @@
-﻿using FridaysForks.AsyncApi.Models;
-using FridaysForks.AsyncApi.Models.V3;
+﻿using FridaysForks.AsyncApi.Models.V3;
 
 namespace FridaysForks.AsyncApi;
 

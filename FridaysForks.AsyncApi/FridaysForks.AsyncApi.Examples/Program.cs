@@ -1,5 +1,4 @@
 using FridaysForks.AsyncApi;
-using FridaysForks.AsyncApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
