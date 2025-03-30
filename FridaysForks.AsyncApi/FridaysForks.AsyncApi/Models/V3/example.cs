@@ -11,7 +11,7 @@ public class AsyncApiDocument
     public Dictionary<string, Server> Servers { get; set; } 
     public string DefaultContentType { get; set; }
     public Dictionary<string, Channel> Channels { get; set; } 
-    public Dictionary<string, Operation> Operations { get; set; } 
+    public Dictionary<string, ReferenceOrValue<Operation>> Operations { get; set; } 
     public Components Components { get; set; } 
     
 }
@@ -54,10 +54,34 @@ public class License
     public string Url { get; set; }
 }
 
+public class ReferenceOrValue<T> where T:class
+{
+    public ReferenceOrValue(string name, bool fromComponents = false)
+    {
+        Ref = fromComponents ? 
+            $"#/components/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}" 
+            : $"#/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}";
+    }
+
+    public ReferenceOrValue(T value)
+    {
+        Value = value;
+    }
+
+    [JsonPropertyName("$ref")]
+    public string? Ref { get;  }
+
+    public T? Value { get; }
+    
+    public static implicit operator ReferenceOrValue<T>(T value) => new ReferenceOrValue<T>(value);
+}
+
 public class Reference<T>(string name, bool fromComponents = false)
 {
     [JsonPropertyName("$ref")]
-    public string Ref { get;  } = fromComponents? $"#/components/{typeof(T).Name.ToLower()}s/{name}": $"#/{typeof(T).Name.ToLower()}s/{name}";
+    public string Ref { get;  } = fromComponents ? 
+        $"#/components/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}" 
+        : $"#/{char.ToLower(typeof(T).Name[0])}{typeof(T).Name.Substring(1)}s/{name}";
 }
 
 public class Server
@@ -70,7 +94,7 @@ public class Server
     public string Title { get; set; }
     public string Summary { get; set; }
     public Dictionary<string, ServerVariable> Variables { get; set; } 
-    public List<SecurityScheme> Security { get; set; } 
+    public List<Reference<SecurityScheme>> Security { get; set; } 
     public List<Tag> Tags { get; set; }
     public List<ExternalDocumentation> ExternalDocs { get; set; }
     public ServerBinding Bindings { get; set; } 
@@ -221,13 +245,68 @@ public class Operation
     public string Title { get; set; }
     public string Summary { get; set; }
     public string Description { get; set; }
-    public SecurityScheme Security { get; set; }
+    public ReferenceOrValue<SecurityScheme> Security { get; set; }
     public List<Tag>Tags { get; set; } 
-    public List<ExternalDocumentation> ExternalDocs { get; set; } 
-    public Dictionary<string, OperationBinding> Bindings { get; set; } 
-    public List<Message> Messages { get; set; }
+    public ExternalDocumentation ExternalDocs { get; set; }
+    public Dictionary<string, OperationBinding> Bindings { get; set; }
+    public List<ReferenceOrValue<OperationTrait>> Traits { get; set; }
+    public List<Reference<Message>> Messages { get; set; }
     public OperationReply Reply { get; set; }
     
+    //public static implicit operator ReferenceOrValue<Operation>(Operation value) => new ReferenceOrValue<Operation>(value);
+}
+
+public class Schema
+{
+    public string Title { get; set; }
+    public string Type { get; set; }
+    public List<string> Required { get; set; }
+    public decimal? MultipleOf { get; set; }
+    public decimal? Maximum { get; set; }
+    public bool? ExclusiveMaximum { get; set; }
+    public decimal? Minimum { get; set; }
+    public bool? ExclusiveMinimum { get; set; }
+    public int? MaxLength { get; set; }
+    public int? MinLength { get; set; }
+    public string Pattern { get; set; }
+    public int? MaxItems { get; set; }
+    public int? MinItems { get; set; }
+    public bool? UniqueItems { get; set; }
+    public int? MaxProperties { get; set; }
+    public int? MinProperties { get; set; }
+    public List<object> Enum { get; set; }
+    public object Const { get; set; }
+    public List<object> Examples { get; set; }
+    public Schema If { get; set; }
+    public Schema Then { get; set; }
+    public Schema Else { get; set; }
+    public bool? ReadOnly { get; set; }
+    public bool? WriteOnly { get; set; }
+    public Dictionary<string, Schema> Properties { get; set; }
+    public Dictionary<string, Schema> PatternProperties { get; set; }
+    public object AdditionalProperties { get; set; }
+    public object AdditionalItems { get; set; }
+    public object Items { get; set; }
+    public Schema PropertyNames { get; set; }
+    public Schema Contains { get; set; }
+    public List<Schema> AllOf { get; set; }
+    public List<Schema> OneOf { get; set; }
+    public List<Schema> AnyOf { get; set; }
+    public Schema Not { get; set; }
+    public string Description { get; set; }
+    public string Format { get; set; }
+    public object Default { get; set; }
+}
+
+public class OperationTrait
+{
+    public string Title { get; set; }
+    public string Summary { get; set; }
+    public string Description { get; set; }
+    public Reference<SecurityScheme> Security { get; set; }
+    public List<Tag> Tags { get; set; }
+    public ExternalDocumentation ExternalDocs { get; set; }
+    public OperationBinding Bindings { get; set; }
 }
 
 public class OperationReply
@@ -241,7 +320,7 @@ public class OperationBinding
 {
     public object Http { get; set; }
     public object Ws { get; set; }
-    public object Kafka { get; set; }
+    public KafkaOperationBinding Kafka { get; set; }
     public object Anypointmq { get; set; }
     public object Amqp { get; set; }
     public object Amqp1 { get; set; }
@@ -260,6 +339,13 @@ public class OperationBinding
     public object Pulsar { get; set; }
 }
 
+public class KafkaOperationBinding
+{
+    public ReferenceOrValue<Schema> GroupId { get; set; }
+    public ReferenceOrValue<Schema> ClientId { get; set; }
+    public string BindingVersion { get; set; }
+}
+
 public enum OperationAction
 {
     Send,
@@ -270,22 +356,29 @@ public class Message
 {
     public Dictionary<string, object> Headers { get; set; } 
     public object Payload { get; set; }
-    public Dictionary<string, object> CorrelationId { get; set; } 
-    public Dictionary<string, object> SchemaFormat { get; set; } 
-    public Dictionary<string, object> ContentType { get; set; } 
-    public Dictionary<string, object> Name { get; set; } 
-    public Dictionary<string, object> Title { get; set; } 
-    public Dictionary<string, object> Summary { get; set; } 
-    public Dictionary<string, object> Description { get; set; } 
-    public Dictionary<string, object> Tags { get; set; } 
-    public Dictionary<string, object> ExternalDocs { get; set; } 
+    public CorelationID CorrelationId { get; set; } 
+    public string ContentType { get; set; } 
+    public string Name { get; set; } 
+    public string Title { get; set; } 
+    public string Summary { get; set; } 
+    public string Description { get; set; } 
+    public List<Tag> Tags { get; set; } 
+    public ExternalDocumentation ExternalDocs { get; set; } 
     public Dictionary<string, object> Bindings { get; set; } 
     public Dictionary<string, object> Examples { get; set; } 
-    public Dictionary<string, object> Extensions { get; set; } 
+    public Dictionary<string, object> Traits { get; set; } 
+}
+
+public class CorelationID
+{
+    public string Description { get; set; }
+    public string Location { get; set; }
 }
 
 public class Components
 {
     public Dictionary<string, Server>? Servers { get; set; }
     public Dictionary<string, Channel>? Channels { get; set; }
+    public Dictionary<string, SecurityScheme>? SecuritySchemes { get; set; }
+    public Dictionary<string, OperationTrait>? OperationTraits { get; set; }
 }
