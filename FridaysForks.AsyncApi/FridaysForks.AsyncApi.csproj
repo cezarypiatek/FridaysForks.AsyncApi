@@ -5,6 +5,7 @@
         <LangVersion>12.0</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,7 +14,7 @@
       <PackageReference Include="YamlDotNet" Version="16.3.0" />
     </ItemGroup>
     <ItemGroup>
-      <EmbeddedResource Include="UI\asyncapi-ui.html" />
+      <EmbeddedResource Include="UI\*.*" />
     </ItemGroup>
 
 </Project>
